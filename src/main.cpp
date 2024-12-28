@@ -26,13 +26,19 @@ const char *fragmentShaderSource = "#version 330 core\n"
                                     " FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
                                     "}\0";
 
-// vertices for the traiangle
+// vertices for the traiangles (now 2 are there !)
+
 float vertices[] = {
-    // x  ,  y  ,  z    - > axis format
-    -0.5f, -0.5f, 0.0f, // left
-    0.5f, -0.5f, 0.0f, // right
-    0.0f, 0.5f, 0.0f // top
+// first triangle
+0.5f, 0.5f, 0.0f, // top right
+0.5f, -0.5f, 0.0f, // bottom right
+-0.5f, 0.5f, 0.0f, // top left
+// second triangle
+0.5f, -0.5f, 0.0f, // bottom right
+-0.5f, -0.5f, 0.0f, // bottom left
+-0.5f, 0.5f, 0.0f // top left
 };
+
 
 
 
@@ -210,7 +216,7 @@ int main() {
 
         glUseProgram(shaderprog);
         glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
 
 
 
