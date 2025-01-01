@@ -1,33 +1,12 @@
 #include <glad/glad.h>  // Include the glad header
 #include <GLFW/glfw3.h> // Include the GLFW header
 
-#include <iostream>
 #include <fstream>
 #include <string>
+#include <iostream>
 
-
-
-
-// globally saying off this thing what ever this code is not sure yet tho
-
-const char *vertexShaderSource = "#version 330 core\n"
-                                 "layout (location = 0) in vec3 aPos;\n"
-                                 "void main()\n"
-                                 "{\n"
-                                 " gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-                                 "}\0";
-
-
-// fagment shader content
-const char *fragmentShaderSource = "#version 330 core\n"
-                                    "out vec4 FragColor;\n"
-                                    "void main()\n"
-                                    "{\n"
-                                    " FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
-                                    "}\0";
 
 // vertices for the traiangles (now 2 are there !)
-
 float vertices[] = {
     // Center point
      0.0f,  0.0f, 0.0f, // 0: Center of the hexagon
@@ -50,7 +29,6 @@ int indices[] = {
     0, 5, 6, // Center, Bottom-left, Top-left
     0, 6, 1, // Center, Top-left, Top
 };
-
 
 
 
@@ -89,27 +67,32 @@ void linkershadersuccess(const unsigned int &shader){
     }
 }
 
-std::string glslreader(const std::string & filepath) {
-    std::ifstream file;
-    file.open(filepath);
-    if (!file.is_open()) {
-        std::cerr << "Failed to open file: " << filepath << std::endl;
-        return "";
-    }
-    
-    std::string content;
-    std::string line;
-    
-    while(getline(file, line)){
-        content += line + "\n";
-    }
-    content += "\0";
+// function to parse the shader file (returns as string) -> give path to the file 
+// @todo: make it load like absolute path or something like that
+std::string parseShader(const std::string &filepath){
+    std::string result = "";
 
-    file.close();
-    return content;
+    std::string line = "";
+    std::ifstream file(filepath.c_str());
+
+    if (file.is_open()){
+        while (getline(file, line)){
+            result += line + "\n";
+        }
+        file.close();
+    } else {
+        std::cerr << "ERROR::SHADER::FILE_NOT_READABLE" << std::endl;
+    }
+
+    return result;
 }
 
+
+
+
 int main() {
+
+
     // Initialize GLFW
     if (!glfwInit()) {
         std::cerr << "Failed to initialize GLFW" << std::endl;
@@ -144,25 +127,20 @@ int main() {
     // ---------- END OF BOILER PLATE ----------
 
 
-    /* 
-    
-    -------- SO THIS WAS WHAT WAS INTRODUCED PRIOR TO THE VAO I THOUGHT WE SHD INITIATE THE VBO BEFORE 
-    THE SHADER COMPILATION BUT I WAS WRONG SO I COMMENTED IT OUT AND MOVED IT TO THE BOTTOM OF THE CODE
-    SO THAT IT CAN BE INITIATED AFTER THE SHADER COMPILATION AND LINKING IS DONE --------
-
-    // vertex buffer object (VBO) 
-    unsigned int VBO;
-    glGenBuffers(1, &VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    */
-
-
 
     // ------- TWO SHADERS VERTEX AND FRAGMENT SHADER -------
 
     // compiling the vertex shader (vertexshadersource up there see)
+
+    std::string vertexShaderSourceee = parseShader("./src/shaders/vertthing.vert");
+    std::string fragmentShaderSourceee = parseShader("./src/shaders/fragthing.frag");
+
+    // conversion to const char * 
+    // we shd create the std::string and then convert it to const char * because the c_str() method is only available for std::string
+    // which means - > we cannot directly chain functions 
+    const char * vertexShaderSource = vertexShaderSourceee.c_str();
+    const char * fragmentShaderSource = fragmentShaderSourceee.c_str();
+
     unsigned int vertexShader;
     vertexShader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
