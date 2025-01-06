@@ -4,6 +4,8 @@
 #include <fstream>
 #include <string>
 #include <iostream>
+#include <filesystem>
+#include <unistd.h>
 
 
 // vertices for the traiangles (now 2 are there !)
@@ -70,9 +72,8 @@ void linkershadersuccess(const unsigned int &shader){
 // function to parse the shader file (returns as string) -> give path to the file 
 // @todo: make it load like absolute path or something like that
 std::string parseShader(const std::string &filepath){
-    std::string result = "";
-
-    std::string line = "";
+    std::string result;
+    std::string line;
     std::ifstream file(filepath.c_str());
 
     if (file.is_open()){
@@ -87,6 +88,15 @@ std::string parseShader(const std::string &filepath){
     return result;
 }
 
+std::string getExecutableDir() {
+    char buffer[1024];
+    ssize_t len = readlink("/proc/self/exe", buffer, sizeof(buffer) - 1);
+    if (len != -1) {
+        buffer[len] = '\0';
+        return std::filesystem::path(buffer).parent_path().string();
+    }
+    return "";
+}
 
 
 
@@ -132,8 +142,8 @@ int main() {
 
     // compiling the vertex shader (vertexshadersource up there see)
 
-    std::string vertexShaderSourceee = parseShader("./src/shaders/vertthing.vert");
-    std::string fragmentShaderSourceee = parseShader("./src/shaders/fragthing.frag");
+    std::string vertexShaderSourceee = parseShader(getExecutableDir() + "/shaders/vertthing.vert");
+    std::string fragmentShaderSourceee = parseShader(getExecutableDir() + "/shaders/fragthing.frag");
 
     // conversion to const char * 
     // we shd create the std::string and then convert it to const char * because the c_str() method is only available for std::string
