@@ -6,6 +6,7 @@
 #include <iostream>
 #include <filesystem>
 #include <unistd.h>
+#include <cmath>
 
 
 // vertices for the traiangles (now 2 are there !)
@@ -70,7 +71,7 @@ void linkershadersuccess(const unsigned int &shader){
 }
 
 // function to parse the shader file (returns as string) -> give path to the file 
-// @todo: make it load like absolute path or something like that
+// @todo: make it load like absolute path or something like that [DONE]
 std::string parseShader(const std::string &filepath){
     std::string result;
     std::string line;
@@ -88,6 +89,7 @@ std::string parseShader(const std::string &filepath){
     return result;
 }
 
+// function to get the executable directory
 std::string getExecutableDir() {
     char buffer[1024];
     ssize_t len = readlink("/proc/self/exe", buffer, sizeof(buffer) - 1);
@@ -142,8 +144,9 @@ int main() {
 
     // compiling the vertex shader (vertexshadersource up there see)
 
+    // adding the getExecutableDir() to the path of the shader file 
     std::string vertexShaderSourceee = parseShader(getExecutableDir() + "/shaders/vertthing.vert");
-    std::string fragmentShaderSourceee = parseShader(getExecutableDir() + "/shaders/fragthing.frag");
+    std::string fragmentShaderSourceee = parseShader( getExecutableDir() + "/shaders/fragthing.frag");
 
     // conversion to const char * 
     // we shd create the std::string and then convert it to const char * because the c_str() method is only available for std::string
@@ -217,12 +220,20 @@ int main() {
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-
+        // linking or using the shader program
         glUseProgram(shaderprog);
+
+        // color change (using the uniform variable in fragment shader)
+        float timeValue = glfwGetTime(); // get the time 
+        float blueValue = (std::sin(timeValue) / 2.0f) + 0.5f; // add a sin wave to the blue color wrt time
+        int vertexColorLocation = glGetUniformLocation(shaderprog, "myColor"); // get the location of the uniform variable
+        glUniform4f(vertexColorLocation, 0.0f, 0.0f, blueValue, 1.0f); // set the uniform variable
+
+
+        // render the hexagon
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 18, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
-
 
 
         // Swap buffers and poll events
