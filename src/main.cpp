@@ -9,29 +9,39 @@
 #include <cmath>
 
 
-// vertices for the traiangles (now 2 are there !)
 float vertices[] = {
-    // Center point
-     0.0f,  0.0f, 0.0f, // 0: Center of the hexagon
-
-    // Hexagon vertices (clockwise from top)
-     0.0f,  0.5f, 0.0f, // 1: Top
-     0.43f,  0.25f, 0.0f, // 2: Top-right
-     0.43f, -0.25f, 0.0f, // 3: Bottom-right
-     0.0f, -0.5f, 0.0f, // 4: Bottom
-    -0.43f, -0.25f, 0.0f, // 5: Bottom-left
-    -0.43f,  0.25f, 0.0f, // 6: Top-left
+    // positions            // colors
+    0.5f, -0.5f, 0.0f,      1.0f, 0.0f, 0.0f, // bottom right
+    -0.5f, -0.5f, 0.0f,     0.0f, 1.0f, 0.0f, // bottom left
+    0.0f, 0.5f, 0.0f,       0.0f, 0.0f, 1.0f // top
 };
 
 int indices[] = {
-    // Triangles to form the hexagon
-    0, 1, 2, // Center, Top, Top-right
-    0, 2, 3, // Center, Top-right, Bottom-right
-    0, 3, 4, // Center, Bottom-right, Bottom
-    0, 4, 5, // Center, Bottom, Bottom-left
-    0, 5, 6, // Center, Bottom-left, Top-left
-    0, 6, 1, // Center, Top-left, Top
+    0, 1, 2
 };
+
+// vertices for the traiangles (now 2 are there !)
+// float vertices_hexagon[] = {
+//     // Center point
+//      0.0f,  0.0f, 0.0f, // 0: Center of the hexagon
+//     // Hexagon vertices (clockwise from top)
+//      0.0f,  0.5f, 0.0f, // 1: Top
+//      0.43f,  0.25f, 0.0f, // 2: Top-right
+//      0.43f, -0.25f, 0.0f, // 3: Bottom-right
+//      0.0f, -0.5f, 0.0f, // 4: Bottom
+//     -0.43f, -0.25f, 0.0f, // 5: Bottom-left
+//     -0.43f,  0.25f, 0.0f, // 6: Top-left
+// };
+
+// int indices_hexagon[] = {
+//     // Triangles to form the hexagon
+//     0, 1, 2, // Center, Top, Top-right
+//     0, 2, 3, // Center, Top-right, Bottom-right
+//     0, 3, 4, // Center, Bottom-right, Bottom
+//     0, 4, 5, // Center, Bottom, Bottom-left
+//     0, 5, 6, // Center, Bottom-left, Top-left
+//     0, 6, 1, // Center, Top-left, Top
+// };
 
 
 
@@ -186,10 +196,6 @@ int main() {
     glDeleteShader(vertexShader);
 
 
-    // linking the vertex attributes
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
 
     // vertex array object (VAO) AND vertex buffer object (VBO)
     unsigned int VAO, VBO, EBO;
@@ -207,8 +213,11 @@ int main() {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0); // vertex attributes are linked
+    // linking the vertex attributes (positions and colors)
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0); // vertex attributes are linked
     glEnableVertexAttribArray(0); // enable the vertex attributes
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float))); // vertex attributes are linked
+    glEnableVertexAttribArray(1); // enable the vertex attributes
 
 
     // Render loop

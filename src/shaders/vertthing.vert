@@ -1,10 +1,11 @@
 #version 460 core
-layout(location=0)in vec3 aPos;// position has attribute position 0
+layout(location = 0) in vec3 aPos;// position has attribute position 0
+layout(location = 1) in vec3 aColor; // color has attribute position 1
 
-out vec4 vertexColor;// specify a color output to the fragment shader
+out vec3 myColor;
 
 void main()
 {
-    gl_Position=vec4(aPos,1.);// we give a vec3 to vec4’s constructor
-    vertexColor=vec4(.5,0.,0.,1.);// output variable to dark-red
+    gl_Position = vec4(aPos,1.);// we give a vec3 to vec4’s constructor
+    myColor = aColor;//output variable to dark-red
 }
