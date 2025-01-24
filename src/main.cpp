@@ -1,12 +1,11 @@
 #include <glad/glad.h>  // Include the glad header
 #include <GLFW/glfw3.h> // Include the GLFW header
 
-#include <fstream>
+#include "Shader.h++"
+#include "Util.h++"
+
 #include <string>
 #include <iostream>
-#include <filesystem>
-#include <unistd.h>
-#include <cmath>
 
 
 // float vertices[] = {
@@ -45,85 +44,15 @@ int indices[] = {
 };
 
 
-
-
-// Callback function to handle window resizing
-void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
-    glViewport(0, 0, width, height);
-};
-
-// Process input
-void processInput(GLFWwindow* window) {
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-        glfwSetWindowShouldClose(window, true);
-    }
-}
-
-void compileshadersuccess(const unsigned int &shader, const std::string & type){
-    int success;
-    char infoLog[512];
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-
-    if (!success) {
-        glGetShaderInfoLog(shader, 512, NULL, infoLog);
-        std::cerr << "ERROR::SHADER::"<<type<<"::COMPILATION_FAILED\n" << infoLog << std::endl;
-    }
-}
-
-void linkershadersuccess(const unsigned int &shader){
-    int success;
-    char infoLog[512];
-    glGetProgramiv(shader, GL_LINK_STATUS, &success);
-
-    if (!success) {
-        glGetShaderInfoLog(shader, 512, NULL, infoLog);
-        std::cerr << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
-    }
-}
-
-// function to parse the shader file (returns as string) -> give path to the file 
-// @todo: make it load like absolute path or something like that [DONE]
-std::string parseShader(const std::string &filepath){
-    std::string result;
-    std::string line;
-    std::ifstream file(filepath.c_str());
-
-    if (file.is_open()){
-        while (getline(file, line)){
-            result += line + "\n";
-        }
-        file.close();
-    } else {
-        std::cerr << "ERROR::SHADER::FILE_NOT_READABLE" << std::endl;
-    }
-
-    return result;
-}
-
-// function to get the executable directory
-std::string getExecutableDir() {
-    char buffer[1024];
-    ssize_t len = readlink("/proc/self/exe", buffer, sizeof(buffer) - 1);
-    if (len != -1) {
-        buffer[len] = '\0';
-        return std::filesystem::path(buffer).parent_path().string();
-    }
-    return "";
-}
-
-
-
 int main() {
 
+    // ---------- BOILER PLATE ----------
 
     // Initialize GLFW
     if (!glfwInit()) {
         std::cerr << "Failed to initialize GLFW" << std::endl;
         return -1;
     }
-
-    
-    // ---------- BOILER PLATE ----------
 
     // Configure GLFW: Set OpenGL version to 3.3 Core Profile
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -150,52 +79,7 @@ int main() {
     // ---------- END OF BOILER PLATE ----------
 
 
-
-    // ------- TWO SHADERS VERTEX AND FRAGMENT SHADER -------
-
-    // compiling the vertex shader (vertexshadersource up there see)
-
-    // adding the getExecutableDir() to the path of the shader file 
-    std::string vertexShaderSourceee = parseShader(getExecutableDir() + "/shaders/vertthing.vert");
-    std::string fragmentShaderSourceee = parseShader( getExecutableDir() + "/shaders/fragthing.frag");
-
-    // conversion to const char * 
-    // we shd create the std::string and then convert it to const char * because the c_str() method is only available for std::string
-    // which means - > we cannot directly chain functions 
-    const char * vertexShaderSource = vertexShaderSourceee.c_str();
-    const char * fragmentShaderSource = fragmentShaderSourceee.c_str();
-
-    unsigned int vertexShader;
-    vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-    glCompileShader(vertexShader);
-    compileshadersuccess(vertexShader, "VERTEX");
-
-    // compiling the fragment shader (fragmentshadersource up there see)
-    unsigned int fragmentShader;
-    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-    glCompileShader(fragmentShader);
-    compileshadersuccess(fragmentShader, "FRAGMENT");
-
-    // --------------------- SHADER OVER ---------------------
-
-
-
-    // --------------- linking shader programs ---------------
-
-    unsigned int shaderprog = glCreateProgram();
-    glAttachShader(shaderprog, vertexShader);
-    glAttachShader(shaderprog, fragmentShader);
-    glLinkProgram(shaderprog);
-    linkershadersuccess(shaderprog);
-
-    // --------------- LINKING SHADERS OVER ---------------
-
-    // dont forget to delete the shaders
-    glDeleteShader(fragmentShader); 
-    glDeleteShader(vertexShader);
-
+    Shader shaderprog((getExecutableDir() + "/shaders/vertthing.vert").c_str(), (getExecutableDir() + "/shaders/fragthing.frag").c_str());
 
 
     // vertex array object (VAO) AND vertex buffer object (VBO)
@@ -231,14 +115,7 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT);
 
         // linking or using the shader program
-        glUseProgram(shaderprog);
-
-        // color change (using the uniform variable in fragment shader)
-        float timeValue = glfwGetTime(); // get the time 
-        float blueValue = (std::sin(timeValue) / 2.0f) + 0.5f; // add a sin wave to the blue color wrt time
-        int vertexColorLocation = glGetUniformLocation(shaderprog, "myColor"); // get the location of the uniform variable
-        glUniform4f(vertexColorLocation, 0.0f, 0.0f, blueValue, 1.0f); // set the uniform variable
-
+        shaderprog.initialize();
 
         // render the hexagon
         glBindVertexArray(VAO);
@@ -255,10 +132,6 @@ int main() {
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
     glDeleteBuffers(1, &EBO);
-
-    // Clean up and exit
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
 
 
     glfwDestroyWindow(window);
