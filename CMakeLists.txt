@@ -6,10 +6,14 @@ project(app VERSION 0.1)
 include_directories(include)
 
 # Add glad.c as a source file
-add_executable(app src/main.cpp src/glad.c src/Shader.h++ src/Shader.cpp)
+add_executable(app src/main.cpp src/glad.c src/Shader.h++ src/Shader.cpp src/stb_image.cpp)
 
 # Link GLFW to the executable
 target_link_libraries(app glfw)
 
 # Copy shaders to build directory
-file(COPY ${CMAKE_SOURCE_DIR}/src/shaders DESTINATION ${CMAKE_BINARY_DIR})
+file(COPY ${CMAKE_SOURCE_DIR}/src/shaders/fs DESTINATION ${CMAKE_BINARY_DIR})
+file(COPY ${CMAKE_SOURCE_DIR}/src/shaders/vs DESTINATION ${CMAKE_BINARY_DIR})
+
+# copy images to build directory
+file(COPY ${CMAKE_SOURCE_DIR}/src/images DESTINATION ${CMAKE_BINARY_DIR})

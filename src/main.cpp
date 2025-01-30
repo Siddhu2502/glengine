@@ -7,6 +7,7 @@
 #include <string>
 #include <iostream>
 
+#include <stb_image/stb_image.h>
 
 // float vertices[] = {
 //     // positions            // colors
@@ -21,16 +22,16 @@
 
 // vertices for the traiangles (now 2 are there !)
 float vertices[] = {
-    // positions          // colors
+    // positions          // colors           // texture coords
     // Center point
-     0.0f,  0.0f, 0.0f,   1.0f, 1.0f, 1.0f, // 0: Center (white)
+     0.0f,  0.0f, 0.0f,   1.0f, 1.0f, 1.0f,   0.5f, 0.5f, // 0: Center (white)
     // Hexagon vertices (clockwise from top)
-     0.0f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f, // 1: Top (red)
-     0.43f,  0.25f, 0.0f, 0.0f, 1.0f, 0.0f, // 2: Top-right (green)
-     0.43f, -0.25f, 0.0f, 0.0f, 0.0f, 1.0f, // 3: Bottom-right (blue)
-     0.0f, -0.5f, 0.0f,   1.0f, 1.0f, 0.0f, // 4: Bottom (yellow)
-    -0.43f, -0.25f, 0.0f, 0.0f, 1.0f, 1.0f, // 5: Bottom-left (cyan)
-    -0.43f,  0.25f, 0.0f, 1.0f, 0.0f, 1.0f, // 6: Top-left (magenta)
+     0.0f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   0.5f, 1.0f, // 1: Top (red)
+     0.43f,  0.25f, 0.0f, 0.0f, 1.0f, 0.0f,   0.93f, 0.75f, // 2: Top-right (green)
+     0.43f, -0.25f, 0.0f, 0.0f, 0.0f, 1.0f,   0.93f, 0.25f, // 3: Bottom-right (blue)
+     0.0f, -0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.5f, 0.0f, // 4: Bottom (yellow)
+    -0.43f, -0.25f, 0.0f, 0.0f, 1.0f, 1.0f,   0.07f, 0.25f, // 5: Bottom-left (cyan)
+    -0.43f,  0.25f, 0.0f, 1.0f, 0.0f, 1.0f,   0.07f, 0.75f, // 6: Top-left (magenta)
 };
 
 int indices[] = {
@@ -79,7 +80,7 @@ int main() {
     // ---------- END OF BOILER PLATE ----------
 
 
-    Shader shaderprog((getExecutableDir() + "/shaders/vertthing.vert").c_str(), (getExecutableDir() + "/shaders/fragthing.frag").c_str());
+    Shader shaderprog((getExecutableDir() + "/shaders/vs/vertthing.vert").c_str(), (getExecutableDir() + "/shaders/fs/fragthing.frag").c_str());
 
 
     // vertex array object (VAO) AND vertex buffer object (VBO)
@@ -99,10 +100,40 @@ int main() {
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     // linking the vertex attributes (positions and colors)
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0); // vertex attributes are linked
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0); // vertex attributes are linked
     glEnableVertexAttribArray(0); // enable the vertex attributes
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float))); // vertex attributes are linked
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float))); // vertex attributes are linked
     glEnableVertexAttribArray(1); // enable the vertex attributes
+
+
+    // ------------------ Texture generation --------------
+    unsigned int texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+
+    // loading the image
+    int width, height, nrChannels;
+    unsigned char * data = stbi_load((getExecutableDir() + "/images/stoneimage.png").c_str(), &width, &height, &nrChannels, 0);
+
+    if (data == nullptr) {
+        std::cerr << "Failed to load texture" << std::endl;
+        return -1;
+    }else{
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+
+    stbi_image_free(data);
+
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float))); // vertex attributes are linked
+    glEnableVertexAttribArray(2); // enable the vertex attributes
+
+
 
 
     // Render loop
@@ -118,6 +149,7 @@ int main() {
         shaderprog.initialize();
 
         // render the hexagon
+        glBindTexture(GL_TEXTURE_2D, texture);
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 18, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
