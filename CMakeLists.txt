@@ -6,7 +6,12 @@ project(app VERSION 0.1)
 include_directories(include)
 
 # Add glad.c as a source file
-add_executable(app src/main.cpp src/glad.c src/Shader.h++ src/Shader.cpp src/stb_image.cpp)
+add_executable(app 
+            src/main.cpp 
+            src/glad.c 
+            src/Shader.cpp
+            src/Window.cpp 
+            src/stb_image.cpp)
 
 # Link GLFW to the executable
 target_link_libraries(app glfw)

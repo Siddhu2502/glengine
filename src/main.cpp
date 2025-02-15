@@ -1,13 +1,13 @@
-#include <glad/glad.h>  // Include the glad header
-#include <GLFW/glfw3.h> // Include the GLFW header
-
-#include "Shader.h++"
-#include "Util.h++"
+#include <glad/glad.h> 
+#include <GLFW/glfw3.h>
+#include <stb_image/stb_image.h>
 
 #include <string>
 #include <iostream>
 
-#include <stb_image/stb_image.h>
+#include "Window.h"
+#include "Shader.h"
+#include "Utils.h"
 
 // float vertices[] = {
 //     // positions            // colors
@@ -24,14 +24,14 @@
 float vertices[] = {
     // positions          // colors           // texture coords
     // Center point
-     0.0f,  0.0f, 0.0f,   1.0f, 1.0f, 1.0f,   0.5f, 0.5f, // 0: Center (white)
-    // Hexagon vertices (clockwise from top)
-     0.0f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   0.5f, 1.0f, // 1: Top (red)
-     0.43f,  0.25f, 0.0f, 0.0f, 1.0f, 0.0f,   0.93f, 0.75f, // 2: Top-right (green)
-     0.43f, -0.25f, 0.0f, 0.0f, 0.0f, 1.0f,   0.93f, 0.25f, // 3: Bottom-right (blue)
-     0.0f, -0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.5f, 0.0f, // 4: Bottom (yellow)
-    -0.43f, -0.25f, 0.0f, 0.0f, 1.0f, 1.0f,   0.07f, 0.25f, // 5: Bottom-left (cyan)
-    -0.43f,  0.25f, 0.0f, 1.0f, 0.0f, 1.0f,   0.07f, 0.75f, // 6: Top-left (magenta)
+    0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.5f, 0.5f,       // 0: Center (white)
+                                                          // Hexagon vertices (clockwise from top)
+    0.0f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.5f, 1.0f,       // 1: Top (red)
+    0.43f, 0.25f, 0.0f, 0.0f, 1.0f, 0.0f, 0.93f, 0.75f,   // 2: Top-right (green)
+    0.43f, -0.25f, 0.0f, 0.0f, 0.0f, 1.0f, 0.93f, 0.25f,  // 3: Bottom-right (blue)
+    0.0f, -0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 0.5f, 0.0f,      // 4: Bottom (yellow)
+    -0.43f, -0.25f, 0.0f, 0.0f, 1.0f, 1.0f, 0.07f, 0.25f, // 5: Bottom-left (cyan)
+    -0.43f, 0.25f, 0.0f, 1.0f, 0.0f, 1.0f, 0.07f, 0.75f,  // 6: Top-left (magenta)
 };
 
 int indices[] = {
@@ -44,54 +44,23 @@ int indices[] = {
     0, 6, 1, // Center, Top-left, Top
 };
 
+int main()
+{
 
-int main() {
-
-    // ---------- BOILER PLATE ----------
-
-    // Initialize GLFW
-    if (!glfwInit()) {
-        std::cerr << "Failed to initialize GLFW" << std::endl;
-        return -1;
-    }
-
-    // Configure GLFW: Set OpenGL version to 3.3 Core Profile
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-    // Creating the Window
-    GLFWwindow* window = glfwCreateWindow(800, 600, "OPENGL TAB", nullptr, nullptr);
-    if (window == nullptr) {
-        std::cerr << "Failed to create GLFW window" << std::endl;
-        glfwTerminate();
-        return -1;
-    }
-
-    glfwMakeContextCurrent(window);
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-
-    // Load all the OpenGL functions using GLAD
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-        std::cerr << "Failed to initialize GLAD" << std::endl;
-        return -1;
-    }
-
-    // ---------- END OF BOILER PLATE ----------
-
-
-    Shader shaderprog((getExecutableDir() + "/shaders/vs/vertthing.vert").c_str(), (getExecutableDir() + "/shaders/fs/fragthing.frag").c_str());
-
+    // ---------- Window Initialization ----------
+    Window window(800, 600, "Hello World");
+    
+    // ---------- Shader Initialization ----------
+    Shader shaderprog((getExecutableDir() + "/vs/vertthing.vert").c_str(), (getExecutableDir() + "/fs/fragthing.frag").c_str());
 
     // vertex array object (VAO) AND vertex buffer object (VBO)
     unsigned int VAO, VBO, EBO;
 
     glGenVertexArrays(1, &VAO); // create the vertex array which stores the vertex buffer object
-    glGenBuffers(1, &VBO); // create the vertex buffer object (there can be multiple VBOs)
-    glGenBuffers(1, &EBO); // create the element buffer object (EBO)
+    glGenBuffers(1, &VBO);      // create the vertex buffer object (there can be multiple VBOs)
+    glGenBuffers(1, &EBO);      // create the element buffer object (EBO)
 
     glBindVertexArray(VAO);
-
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW); // vertices are given up in the code
@@ -100,11 +69,10 @@ int main() {
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     // linking the vertex attributes (positions and colors)
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0); // vertex attributes are linked
-    glEnableVertexAttribArray(0); // enable the vertex attributes
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float))); // vertex attributes are linked
-    glEnableVertexAttribArray(1); // enable the vertex attributes
-
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);                   // vertex attributes are linked
+    glEnableVertexAttribArray(0);                                                                    // enable the vertex attributes
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(3 * sizeof(float))); // vertex attributes are linked
+    glEnableVertexAttribArray(1);                                                                    // enable the vertex attributes
 
     // ------------------ Texture generation --------------
     unsigned int texture;
@@ -115,34 +83,34 @@ int main() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-
     // loading the image
     int width, height, nrChannels;
-    unsigned char * data = stbi_load((getExecutableDir() + "/images/stoneimage.png").c_str(), &width, &height, &nrChannels, 0);
+    unsigned char *data = stbi_load((getExecutableDir() + "/images/stoneimage.png").c_str(), &width, &height, &nrChannels, 0);
 
-    if (data == nullptr) {
+    if (data == nullptr)
+    {
         std::cerr << "Failed to load texture" << std::endl;
         return -1;
-    }else{
+    }
+    else
+    {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
     }
 
     stbi_image_free(data);
 
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float))); // vertex attributes are linked
-    glEnableVertexAttribArray(2); // enable the vertex attributes
-
-
-
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(6 * sizeof(float))); // vertex attributes are linked
+    glEnableVertexAttribArray(2);                                                                    // enable the vertex attributes
 
     // Render loop
-    while (!glfwWindowShouldClose(window)) {
+    while (!window.windowShouldClose())
+    {
         // Input
-        processInput(window);
+        window.processInput();
 
         // Rendering commands
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
         // linking or using the shader program
@@ -154,10 +122,9 @@ int main() {
         glDrawElements(GL_TRIANGLES, 18, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
 
-
         // Swap buffers and poll events
-        glfwSwapBuffers(window);
-        glfwPollEvents();
+        window.swapBuffers();
+        window.pollEvents();
     }
 
     // Delete the VAO, VBO, EBO
@@ -165,8 +132,5 @@ int main() {
     glDeleteBuffers(1, &VBO);
     glDeleteBuffers(1, &EBO);
 
-
-    glfwDestroyWindow(window);
-    glfwTerminate();
     return 0;
 }

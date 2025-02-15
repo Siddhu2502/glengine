@@ -1,5 +1,5 @@
-#ifndef UTIL_H
-#define UTIL_H
+#ifndef UTILS_H
+#define UTILS_H
 
 #include <string>
 #include <fstream>
@@ -29,4 +29,4 @@ std::string getExecutableDir() {
     return "";
 }
 
-#endif // UTIL_H
+#endif // UTILS_H
