@@ -11,6 +11,7 @@ add_executable(app
             src/glad.c 
             src/Shader.cpp
             src/Window.cpp 
+            src/Mesh.cpp
             src/stb_image.cpp)
 
 # Link GLFW to the executable
