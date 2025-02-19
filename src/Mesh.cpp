@@ -3,17 +3,14 @@
 Mesh::Mesh(const std::vector<float>& vertices, const std::vector<unsigned int>& indices)
     : indexcount(indices.size())
 {
-    // Create a new "Vertex Recipe Card" (VAO) and get its ID
     glGenVertexArrays(1, &VAO);
-    // Create a new "Ingredient Container" (VBO) for vertex data and get its ID
     glGenBuffers(1, &VBO);
-    // Create a new "Index List" (EBO) and get its ID
     glGenBuffers(1, &EBO);
 
-    // "Pull out" the "Vertex Recipe Card" (VAO) - make it active
+    // make it active
     glBindVertexArray(VAO);
 
-    // "Select" the "Ingredient Container" (VBO) - make it the active ARRAY_BUFFER
+    // make it the active ARRAY_BUFFER
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     // "Pour" the raw vertex data (positions, colors, texcoords) into the VBO container
     glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), static_cast<const void*>(vertices.data()), GL_STATIC_DRAW);
@@ -25,36 +22,37 @@ Mesh::Mesh(const std::vector<float>& vertices, const std::vector<unsigned int>& 
 
     // --- Tell OpenGL how to read the vertex data from the VBO based on the VAO's "recipe" ---
 
-    // Tell OpenGL: "Attribute 0 (position) is 3 floats, starting at the beginning of the VBO, with a stride of 8 floats per vertex"
+    // (0,1,2) - > position , color, texcoord
+    // (3,3,2) - > 3 floats for position, 3 floats for color, 2 floats for texcoord
+    // 8 floats in total (3+3+2)
+    // 8 * sizeof(float) - > jump 8 floats to get to the next vertex data
+    // void* 0 - > start from the beginning of the vertex data
+    // void* 3*sizeof(float) - > start from the 4th float (3rd index) of the vertex data
+    // void* 6*sizeof(float) - > start from the 7th float (6th index) of the vertex data
+
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
-    // Enable Attribute 0 (position) in the VAO's recipe
     glEnableVertexAttribArray(0);
 
-    // Tell OpenGL: "Attribute 1 (color) is 3 floats, starting at 3 floats offset into each vertex, stride 8 floats"
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(3 * sizeof(float)));
-    // Enable Attribute 1 (color) in the VAO's recipe
     glEnableVertexAttribArray(1);
 
-    // Tell OpenGL: "Attribute 2 (texture coordinates) is 2 floats, starting at 6 floats offset into each vertex, stride 8 floats"
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(6 * sizeof(float)));
-    // Enable Attribute 2 (texture coordinates) in the VAO's recipe
     glEnableVertexAttribArray(2);
 
-    // --- "Put away" or "Deselect" everything after setup - Clear the workspace ---
     glBindBuffer(GL_ARRAY_BUFFER, 0);         // Deselect VBO as ARRAY_BUFFER
-    glBindVertexArray(0);                    // Deselect VAO
+    glBindVertexArray(0);                     // Deselect VAO
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); // Deselect EBO as ELEMENT_ARRAY_BUFFER
 }
 
 void Mesh::bind_VAO() const
 {
-    // "Pull out" the "Vertex Recipe Card" (VAO) - make it active
+    // make it active
     glBindVertexArray(VAO);
 }
 
 void Mesh::unbind_VAO() const
 {
-    // "Put away" the "Vertex Recipe Card" (VAO) - make it inactive
+    //make it inactive
     glBindVertexArray(0);
 
 }
