@@ -1,12 +1,17 @@
 # Open GL contents
 
 ## Description
+
 This is a repository to store all the code I write while learning Open GL.
 
 This repo have the following structure:
+
 - `src/` : This folder contains all the code I write.
+  
 - `include/` : This folder contains all the header files. (generic and specific to the project)
+  
 - `updates/` : This folder contains images of the progress I make.
+  
 - `README.md` : This file.
 
 ## To run the code
