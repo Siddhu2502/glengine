@@ -12,7 +12,8 @@ add_executable(app
             src/Shader.cpp
             src/Window.cpp 
             src/Mesh.cpp
-            src/stb_image.cpp)
+            src/stb_image.cpp
+            src/Texture.cpp)
 
 # Link GLFW to the executable
 target_link_libraries(app glfw)
