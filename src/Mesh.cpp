@@ -7,7 +7,7 @@ Mesh::Mesh(const std::vector<float>& vertices, const std::vector<unsigned int>& 
     glGenBuffers(1, &VBO);
     glGenBuffers(1, &EBO);
 
-    // make it active
+    // make it actTive
     glBindVertexArray(VAO);
 
     // make it the active ARRAY_BUFFER

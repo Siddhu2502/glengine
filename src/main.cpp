@@ -10,6 +10,7 @@
 #include "Shader.h"
 #include "Utils.h"
 #include "Mesh.h"
+#include "Texture.h"
 
 // float vertices[] = {
 //     // positions            // colors
@@ -62,30 +63,7 @@ int main()
     Mesh hexagonMesh(vertices, indices);
 
     // ------------------ Texture generation --------------
-    unsigned int texture;
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    // loading the image
-    int width, height, nrChannels;
-    unsigned char *data = stbi_load((getExecutableDir() + "/images/stoneimage.png").c_str(), &width, &height, &nrChannels, 0);
-
-    if (data == nullptr)
-    {
-        std::cerr << "Failed to load texture" << std::endl;
-        return -1;
-    }
-    else
-    {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-    }
-
-    stbi_image_free(data);                                                                  // enable the vertex attributes
+    Texture hexagonTexture((getExecutableDir() + "/images/stoneimage.png").c_str());
 
     // Render loop
     while (!window.windowShouldClose())
@@ -101,13 +79,14 @@ int main()
         shaderprog.initialize();
 
         // render the hexagon
-        glBindTexture(GL_TEXTURE_2D, texture);
+        hexagonTexture.bind();
         hexagonMesh.bind_VAO();
 
         glDrawElements(GL_TRIANGLE_FAN, hexagonMesh.getIndexCount(), GL_UNSIGNED_INT, 0);
         
         // glDrawElements(GL_TRIANGLE_FAN, hexagonMesh.getIndexCount(), GL_UNSIGNED_INT, 0); -> for drawing the hexagon in efficient way
         hexagonMesh.unbind_VAO();
+        hexagonTexture.unbind();
 
         // Swap buffers and poll events
         window.swapBuffers();
