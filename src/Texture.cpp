@@ -1,175 +1,131 @@
 /**
  * @file Texture.cpp
- * @brief Code for the Texture class, which is your magic paintbrush for surfaces in 3D graphics!
+ * @brief Code for the Texture class, your versatile tool for painting surfaces in 3D graphics - now with multi-texture support!
  *
- * This file is all about creating and managing Textures.
- * Think of a Texture like a digital image or pattern that you can "stick" onto your 3D shapes to make them look detailed and interesting.
- * This class handles loading images from files and preparing them for use with OpenGL,
- * so your shapes aren't just plain colors, but can have wood grain, brick patterns, or even pictures on them!
+ * This file is all about creating and managing Textures, enhancing them to work with multiple texture units.
+ * Think of a Texture as a digital image or pattern that you can "stick" onto your 3D shapes to make them visually rich.
+ * This updated class still handles loading images from files and preparing them for OpenGL,
+ * but now it also allows you to specify which texture unit the texture should be bound to,
+ * enabling you to use multiple textures in your shaders simultaneously for more complex effects!
  */
 
  #include "Texture.h"
  #include <iostream>
 
  /**
-  * @brief Constructor for the Texture class.  This is the "image loader" and "texture prepper"!
+  * @brief Constructor for the Texture class. The enhanced "image loader" and "texture prepper" - now with texture unit assignment!
   *
-  * When you create a Texture object, this constructor is like the first step in getting your image ready to be used by OpenGL.
-  * It's like saying "Hey, I want to load this image from this file and turn it into a Texture that I can paint onto my 3D models!".
+  * When you create a Texture object, this constructor is the first step in getting your image ready for OpenGL, but now with the ability to specify a texture unit!
+  * It's like saying "Hey, I want to load this image from this file, turn it into a Texture, AND assign it to a specific texture unit for use in my shaders!".
   *
   * @param filepath  The path to the image file you want to load as a texture.
   *                  This is like giving the Texture constructor the address of the picture you want to use.
+  * @param textureUnit [Optional] The texture unit to which this texture should be bound when `bind()` is called. Default is 0 (GL_TEXTURE0).
+  *                    Texture units are like different "texture slots" in your GPU. Using different units allows you to use multiple textures at the same time in your shaders.
+  *                    Think of texture units as different paintbrushes, each loaded with a different texture, allowing you to blend and combine them in your artwork!
   *
-  * @note This constructor does the following important things:
-  *       - **Generates a Texture ID:**  Just like every object in OpenGL needs an ID to be identified, we ask OpenGL to create a unique ID for our Texture.
-  *       - **Binds the Texture:**  Think of "binding" like "selecting" a tool. We select our newly created Texture to configure it.
-  *       - **Sets Texture Parameters (Wrapping and Filtering):** We tell OpenGL how to handle the texture, like what to do if the texture coordinates go outside the 0-1 range (wrapping),
-  *         and how to smooth the texture when it's scaled up or down (filtering). These settings control how your texture looks on the 3D surface.
-  *       - **Loads the Image from File:**  Finally, it calls the `load_image()` function to actually read the image data from the file you specified and feed it to OpenGL.
+  * @note This constructor now does the following important things (with additions for texture units and vertical flipping):
+  *       - **Generates a Texture ID:**  As before, we get a unique ID from OpenGL for our Texture.
+  *       - **Binds the Texture (Initially):**  We still "select" our newly created Texture to configure its initial properties.
+  *       - **Sets Texture Parameters (Wrapping and Filtering):**  Texture wrapping and filtering are still configured to control texture behavior.
+  *       - **Sets Vertical Flip on Load:**  Crucially, `stbi_set_flip_vertically_on_load(true)` is now called *before* loading the image. This tells the stb_image library to flip the image vertically when loading.
+  *         This is often needed because image formats and OpenGL have different conventions for texture coordinate origins (top-left vs. bottom-left). Flipping here ensures textures are oriented correctly in OpenGL.
+  *       - **Loads the Image from File:** Calls `load_image()` to read the image data from the file and upload it to OpenGL.
+  *       - **Prints Load Confirmation:**  A message is printed to `std::cout` to confirm that the texture has been loaded and to show its filepath for debugging and feedback.
   */
- Texture::Texture(const char* filepath)
-         : ID(0) ///< Initialize the Texture ID to 0. This ID will be generated by OpenGL later.
+ Texture::Texture(const char* filepath, unsigned int textureUnit = 0)
+         : ID(0), unit(textureUnit) ///< Initialize Texture ID to 0 and store the specified texture unit. Default unit is 0.
  {
-     // ====[ OpenGL Texture Generation and Configuration -  Setting up the Canvas ]====
+     // ====[ OpenGL Texture Generation and Initial Binding -  Preparing the Canvas & Selecting Unit 0 Initially ]====
 
      // 1. Generate a Texture ID -  "Get a blank canvas"
-     //    We ask OpenGL to give us a unique number (ID) that will represent our Texture.
-     //    Think of it like getting a unique number for your painting canvas so you can refer to it later.
-     glGenTextures(1, &ID); // We're asking for 1 texture ID, and we store it in the 'ID' variable.
+     glGenTextures(1, &ID); // Request and get a unique Texture ID from OpenGL.
 
-     // 2. Bind the Texture - "Select the canvas to work on"
-     //    Now we "select" our newly created Texture.  Anything we do with texture functions in OpenGL will now apply to THIS texture (identified by 'ID').
-     //    It's like picking up a specific canvas to start painting on.
-     glBindTexture(GL_TEXTURE_2D, ID); // We're working with 2D textures here, so we bind to GL_TEXTURE_2D target.
+     // 2. Bind the Texture - "Select the canvas to work on (initially on unit 0)"
+     glBindTexture(GL_TEXTURE_2D, ID); // Bind the Texture to GL_TEXTURE_2D target.  Initially, we bind it on the currently active texture unit (which is unit 0 by default).
+                                      // We'll use `bind()` later to bind it to the specified 'unit'.
 
-     // ====[ Texture Parameters -  Setting up the "Canvas Properties" ]====
-     //  These parameters tell OpenGL how to behave when using this texture.
+     // ====[ Texture Parameters -  Setting up the "Canvas Properties" (Still the same wrapping & filtering) ]====
+     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); // Repeat texture horizontally.
+     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT); // Repeat texture vertically.
+     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // Linear filtering for minification.
+     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); // Linear filtering for magnification.
 
-     /**
-      * @brief Set texture wrapping parameters.
-      *
-      * Texture wrapping controls what happens when texture coordinates go outside the [0, 1] range.
-      * Think of it like tiling a floor - what pattern do you use when you go past the edge of a single tile?
-      * - GL_TEXTURE_WRAP_S:  Wrapping mode for the S (or U, typically horizontal) texture coordinate.
-      * - GL_TEXTURE_WRAP_T:  Wrapping mode for the T (or V, typically vertical) texture coordinate.
-      * - GL_REPEAT:  The texture will be repeated.  Like floor tiles repeating to cover a large area.
-      *              Other options include GL_MIRRORED_REPEAT, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_BORDER (see OpenGL documentation for details).
-      */
-     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); // Repeat texture on the S-axis (horizontally)
-     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT); // Repeat texture on the T-axis (vertically)
-
-     /**
-      * @brief Set texture filtering parameters.
-      *
-      * Texture filtering determines how the texture is sampled when it's scaled up or down.
-      * If you stretch or shrink a texture, filtering decides how to make it look smooth (or pixelated, if you want!).
-      * - GL_TEXTURE_MIN_FILTER:  Filtering when the texture is *minified* (shrunk).
-      * - GL_TEXTURE_MAG_FILTER:  Filtering when the texture is *magnified* (stretched).
-      * - GL_LINEAR:  Linear filtering.  This does a simple weighted average of nearby texture pixels, creating a smooth, blurry look when scaling.
-      *             Other options include GL_NEAREST (pixelated look), GL_LINEAR_MIPMAP_LINEAR (for mipmapping, see later), etc.
-      */
-     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // Linear filtering for minification (shrinking)
-     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); // Linear filtering for magnification (stretching)
+     // ====[ Set Vertical Flip - "Adjust Image Orientation upon Loading" ]====
+     stbi_set_flip_vertically_on_load(true); // Tell stb_image to flip loaded images vertically.
+     // This is important because OpenGL expects textures to have their origin at the bottom-left,
+     // while many image formats have their origin at the top-left. Flipping corrects this difference.
+     // This setting is applied to ALL subsequent image loads using stb_image in your application, until changed.
 
      // ====[ Load the Image Data -  "Paint on the Canvas" ]====
-     //  Now that the "canvas" (Texture) is set up, we actually load the image data from the file.
-     load_image(filepath); // Call the function to load the image from the specified file path.
+     load_image(filepath); // Load the image from the specified file path.
+
+     // ====[ Confirmation Message - "Let the User Know Texture Loading was Attempted" ]====
+     std::cout << "loaded texture: " << filepath << std::endl; // Print a message to the console confirming texture loading and the filepath.
  }
 
  /**
-  * @brief Destructor for the Texture class.  The "resource cleaner-upper"!
+  * @brief Destructor for the Texture class.  Still the "resource cleaner-upper"!
   *
-  * When a Texture object is no longer needed (it goes out of scope or is explicitly deleted), this destructor is automatically called.
-  * Its job is to release the OpenGL resources that were used by this Texture, mainly the Texture ID itself.
-  * It's like recycling your canvas after you're done with your painting, freeing up space for new artwork!
+  *  Just like before, when a Texture object is no longer needed, this destructor cleans up OpenGL resources,
+  *  specifically the Texture ID, to prevent GPU memory leaks.
   */
  Texture::~Texture() {
-     // ====[ Clean up OpenGL Texture -  "Recycle the Canvas" ]====
-     glDeleteTextures(1, &ID); // Delete the Texture object from OpenGL's memory using its ID.
+     glDeleteTextures(1, &ID); // Delete the OpenGL Texture object using its ID.
  }
 
  /**
-  * @brief Loads image data from a file and feeds it to OpenGL for texture creation.
+  * @brief Loads image data from a file and feeds it to OpenGL -  "Image Loading Engine" (Unchanged from previous version).
   *
-  * This function is the real "image loading engine". It uses the `stbi_load` function (from the stb_image library, likely)
-  * to read pixel data from an image file (like PNG, JPG, etc.).  Then, it sends this pixel data to OpenGL to become the texture's image content.
+  * This function remains the same in its core functionality - it loads the image data using stb_image and uploads it to OpenGL.
+  * See previous documentation for detailed explanation of `load_image` function.
   *
   * @param filepath The path to the image file to load.
-  *
-  * @note This function performs the following steps:
-  *       - **Loads Image Data:** Uses `stbi_load` to read the image file.  This gives us raw pixel data in memory, along with image dimensions (width, height) and color channel information.
-  *       - **Error Checking:**  Checks if `stbi_load` returned successfully. If it failed to load the image (e.g., file not found, corrupted image), it prints an error message to the console.
-  *       - **Sends Image Data to OpenGL:** If the image was loaded successfully, it uses `glTexImage2D` to copy the pixel data into the currently bound OpenGL texture.
-  *       - **Generates Mipmaps:** Calls `glGenerateMipmap`. Mipmaps are smaller, pre-calculated versions of your texture, used to make textures look better when they are far away or scaled down.  It improves rendering quality and performance.
-  *       - **Frees Image Data:** After sending the data to OpenGL, the memory used to store the raw image data (loaded by `stbi_load`) is no longer needed and is freed using `stbi_image_free` to prevent memory leaks.
   */
  void Texture::load_image(const char* filepath) {
-     // ====[ Load Image Pixel Data from File -  "Get the Paint" ]====
      unsigned char *data = stbi_load(filepath, &width, &height, &nrChannels, 0);
-     // stbi_load:  Loads an image from a file.
-     // - filepath:  Path to the image file.
-     // - &width, &height:  Pointers to integers where the image's width and height will be stored.
-     // - &nrChannels: Pointer to an integer where the number of color channels (e.g., 3 for RGB, 4 for RGBA) will be stored.
-     // - 0:  'desired_channels' -  0 means load image with its native number of channels.
-     // Returns: A pointer to the loaded image data (unsigned char array), or nullptr if loading fails.
 
-     // ====[ Error Handling -  "Check if the Paint is Good" ]====
-     if (data == nullptr) // Check if stbi_load returned nullptr, indicating an error.
+     if (data == nullptr)
      {
-         std::cerr << "Failed to load texture" << std::endl; // Print an error message to the console.
+         std::cerr << "Failed to load texture" << std::endl;
      }
-     else // Image loaded successfully!  Let's get it into OpenGL.
+     else
      {
-         // ====[ Send Image Data to OpenGL - "Apply Paint to Canvas" ]====
-         /**
-          * @brief  Tell OpenGL about the texture image data.
-          *
-          *  This is the crucial step where we transfer the image pixel data into the OpenGL Texture object we created earlier.
-          *  - GL_TEXTURE_2D: We're working with a 2D texture.
-          *  - 0: Mipmap level - we're loading the base level (level 0).
-          *  - GL_RGB:  Internal format - how OpenGL should store the texture data internally. GL_RGB is a common format for color textures.
-          *  - width, height: Dimensions of the texture image.
-          *  - 0: Border - must be 0 (legacy parameter).
-          *  - GL_RGB: Format of the *source* pixel data we are providing.  We assume the loaded image is in RGB format.
-          *  - GL_UNSIGNED_BYTE: Data type of the source pixel data - unsigned bytes (0-255) are typical for image color components.
-          *  - data: Pointer to the actual pixel data we loaded using stbi_load.
-          */
          glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-
-         // ====[ Generate Mipmaps - "Create Scaled-Down Versions for Distance" ]====
-         /**
-          * @brief Generate mipmaps for the currently bound texture.
-          *
-          * Mipmaps are pre-calculated, downscaled versions of the texture. OpenGL can automatically switch to using these smaller versions
-          * when the texture is viewed from a distance, or rendered smaller on screen. This significantly improves rendering performance and reduces texture aliasing (jagged edges).
-          */
          glGenerateMipmap(GL_TEXTURE_2D);
      }
 
-     // ====[ Free Image Data - "Clean up the Leftover Paint" ]====
-     stbi_image_free(data); // Release the memory allocated by stbi_load to store the image data. We no longer need it in CPU memory, as it's now on the GPU as a Texture.
+     stbi_image_free(data);
  }
 
  /**
-  * @brief Makes this Texture active for use in rendering. "Grab the Paintbrush!"
+  * @brief Makes this Texture active for use in rendering - now binds to the specified Texture Unit! "Grab the Paintbrush from the Correct Rack!"
   *
-  * Before you can use a Texture in your shaders to "paint" it onto a surface, you need to "bind" it.
-  * Binding tells OpenGL: "Hey, for the next drawing operations that use textures, use THIS texture that I'm binding right now!".
-  * You usually bind a texture just before you want to draw something that should be textured.
+  *  This `bind()` function is updated to handle texture units!
+  *  It now makes the Texture active on the specific texture unit that was assigned to it during construction (or unit 0 by default).
+  *  This is crucial for multi-texturing - if you want to use multiple textures in your shader, you need to bind each one to a *different* texture unit.
+  *  For example, you might bind a diffuse texture to unit 0, a normal map to unit 1, and a specular map to unit 2, and then sample from these units in your shader.
   */
  void Texture::bind() const {
-     // ====[ Activate Texture - "Pick up the Paintbrush" ]====
-     glBindTexture(GL_TEXTURE_2D, ID); // Make our Texture (identified by 'ID') the currently active texture of type GL_TEXTURE_2D.
+     // ====[ Activate Texture on its Assigned Texture Unit - "Pick up the Paintbrush from the Right Rack" ]====
+     glActiveTexture(GL_TEXTURE0 + unit); // Activate the texture unit that this Texture is assigned to.
+     // - GL_TEXTURE0 + unit:  Calculates the OpenGL texture unit enum.
+     //   GL_TEXTURE0 is the first texture unit, GL_TEXTURE1 is the second, and so on.
+     //   Adding 'unit' (which is the texture unit index) to GL_TEXTURE0 selects the desired texture unit.
+     //   For example, if unit is 0, it becomes GL_TEXTURE0; if unit is 1, it becomes GL_TEXTURE1, etc.
+     //   Texture units are like numbered "slots" where you can bind textures.
+     //   Modern GPUs support many texture units (typically at least 16 or more).
+
+     glBindTexture(GL_TEXTURE_2D, ID); // Bind our Texture (identified by 'ID') to the currently active texture unit (set by glActiveTexture).
+     // Now, any texture operations on the active texture unit will affect this Texture.
  }
 
  /**
-  * @brief Makes this Texture inactive. "Put down the Paintbrush."
+  * @brief Makes this Texture inactive - "Put down the Paintbrush" (Unchanged unbinding).
   *
-  * After you're done drawing with a particular Texture, it's good practice to "unbind" it.
-  * This is like saying "OpenGL, stop using this specific texture for now".  It's not strictly necessary in simple programs, but in larger projects,
-  * it helps avoid accidentally using the wrong texture in later drawing calls. It promotes clean and predictable OpenGL state management.
+  * The `unbind()` function remains the same. It unbinds the texture from the currently active texture unit.
+  *  See previous documentation for details.
   */
  void Texture::unbind() const {
-     // ====[ Deactivate Texture - "Put down the Paintbrush" ]====
-     glBindTexture(GL_TEXTURE_2D, 0); // Unbind the currently active GL_TEXTURE_2D texture.  Binding to 0 means "no texture is active".
+     glBindTexture(GL_TEXTURE_2D, 0); // Unbind the currently active GL_TEXTURE_2D texture on the active texture unit.
  }

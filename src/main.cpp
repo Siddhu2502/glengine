@@ -14,6 +14,8 @@
 #include "Shader.h"
 #include "Utils.h"
 #include "Mesh.h"
+#include "Texture.h"
+
 
 // float vertices[] = {
 //     // positions            // colors
@@ -66,36 +68,10 @@ int main()
     Mesh hexagonMesh(vertices, indices);
 
     // ------------------ Texture generation --------------
-    unsigned int texture;
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    // loading the image
-    int width, height, nrChannels;
-    unsigned char *data = stbi_load((getExecutableDir() + "/images/stoneimage.png").c_str(), &width, &height, &nrChannels, 0);
-
-    if (data == nullptr)
-    {
-        std::cerr << "Failed to load texture" << std::endl;
-        return -1;
-    }
-    else
-    {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-    }
-
-    stbi_image_free(data);                                                                  // enable the vertex attributes
-
     // create multiple textures (file path, textrureUnit) -> start unit id from 0 and increment upto 15 ig
     Texture hexagonTexture1((getExecutableDir() + "/images/stoneimage.png").c_str(), 0);
     Texture hexagonTexture2((getExecutableDir() + "/images/smileyface.png").c_str(), 1);
-
-        
+    
     // Render loop
     while (!window.windowShouldClose())
     {
@@ -109,25 +85,21 @@ int main()
         // linking or using the shader program
         shaderprog.initialize();
 
-
         shaderprog.setInt("myTexture1", 0);
         shaderprog.setInt("myTexture2", 1);
 
-        glm::mat4 trans = glm::mat4(1.0f);
-        trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));    
-
-        unsigned int transformLoc = glGetUniformLocation(shaderprog.ID, "transform");
-        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));    
-
-
         // render the hexagon
-        glBindTexture(GL_TEXTURE_2D, texture);
+        hexagonTexture1.bind();
+        hexagonTexture2.bind();
         hexagonMesh.bind_VAO();
 
         glDrawElements(GL_TRIANGLE_FAN, hexagonMesh.getIndexCount(), GL_UNSIGNED_INT, 0);
         
         // glDrawElements(GL_TRIANGLE_FAN, hexagonMesh.getIndexCount(), GL_UNSIGNED_INT, 0); -> for drawing the hexagon in efficient way
         hexagonMesh.unbind_VAO();
+        hexagonTexture1.unbind();
+        hexagonTexture2.unbind();
+
 
         // Swap buffers and poll events
         window.swapBuffers();

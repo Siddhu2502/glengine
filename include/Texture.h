@@ -22,29 +22,9 @@
  * for use in rendering.  Textures are used to apply images onto 3D models, adding detail and visual richness.
  */
 class Texture {
-public:
-    /**
-     * @brief Constructor for the Texture class. Loads an image from a file and creates an OpenGL texture.
-     *
-     * This constructor takes a file path to an image, loads the image data, and then creates an OpenGL 2D texture
-     * using this image data. It also sets default texture parameters for wrapping and filtering to ensure a reasonable
-     * default texture appearance.
-     *
-     * @param filepath The path to the image file to load (e.g., "textures/wood.png").
-     *
-     * @note Upon successful construction, the Texture object is ready to be bound and used in rendering operations.
-     * @note The constructor uses the stb_image library for image loading. Ensure that stb_image is properly integrated into your project.
-     * @note If image loading fails, an error message is printed to `std::cerr`.
-     */
-    Texture(const char* filepath);
-
-    /**
-     * @brief Destructor for the Texture class. Deletes the OpenGL texture.
-     *
-     * The destructor is responsible for releasing OpenGL resources associated with the Texture object.
-     * Specifically, it deletes the OpenGL texture object to free up GPU memory when the `Texture` object is no longer needed.
-     */
-    ~Texture();
+    public:
+        Texture(const char* filepath, unsigned int textureUnit);
+        ~Texture();
 
     /**
      * @brief Loads image data from a file and updates the OpenGL texture.
@@ -82,10 +62,10 @@ public:
      */
     void unbind() const;
 
-private:
-    int width, height, nrChannels; ///< Image dimensions (width, height) and number of color channels. Loaded by `stbi_load`.
-    const char* filepath;         ///< Filepath of the texture image (stored for potential future use, though not currently used after construction).
-    unsigned int ID;             ///< OpenGL ID of the texture object.
+    private:
+        int width, height, nrChannels;
+        const char* filepath;
+        unsigned int ID, unit;
 };
 
 #endif // TEXTURE_H
