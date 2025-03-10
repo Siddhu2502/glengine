@@ -1,18 +1,22 @@
 #include "Texture.h"
 #include <iostream>
 
-Texture::Texture(const char* filepath)
-        : ID(0)
+Texture::Texture(const char* filepath, unsigned int textureUnit = 0)
+        : ID(0), unit(textureUnit)
 {
     glGenTextures(1, &ID);
     glBindTexture(GL_TEXTURE_2D, ID);
+
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+    stbi_set_flip_vertically_on_load(true);
     load_image(filepath);
+
+    std::cout << "loaded texture: " << filepath << std::endl;
 }
 
 Texture::~Texture() {
@@ -36,6 +40,7 @@ void Texture::load_image(const char* filepath) {
 }
 
 void Texture::bind() const {
+    glActiveTexture(GL_TEXTURE0 + unit);
     glBindTexture(GL_TEXTURE_2D, ID);
 }
 

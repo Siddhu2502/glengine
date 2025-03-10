@@ -6,7 +6,7 @@
 
 class Texture {
     public:
-        Texture(const char* filepath);
+        Texture(const char* filepath, unsigned int textureUnit);
         ~Texture();
 
         void load_image(const char* filepath);
@@ -18,7 +18,7 @@ class Texture {
     private:
         int width, height, nrChannels;
         const char* filepath;
-        unsigned int ID;
+        unsigned int ID, unit;
 };
 
 #endif // TEXTURE_H

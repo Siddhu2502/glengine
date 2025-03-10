@@ -63,8 +63,10 @@ int main()
     Mesh hexagonMesh(vertices, indices);
 
     // ------------------ Texture generation --------------
-    Texture hexagonTexture((getExecutableDir() + "/images/stoneimage.png").c_str());
-
+    // create multiple textures (file path, textrureUnit) -> start unit id from 0 and increment upto 15 ig
+    Texture hexagonTexture1((getExecutableDir() + "/images/stoneimage.png").c_str(), 0);
+    Texture hexagonTexture2((getExecutableDir() + "/images/smileyface.png").c_str(), 1);
+    
     // Render loop
     while (!window.windowShouldClose())
     {
@@ -78,15 +80,21 @@ int main()
         // linking or using the shader program
         shaderprog.initialize();
 
+        shaderprog.setInt("myTexture1", 0);
+        shaderprog.setInt("myTexture2", 1);
+
         // render the hexagon
-        hexagonTexture.bind();
+        hexagonTexture1.bind();
+        hexagonTexture2.bind();
         hexagonMesh.bind_VAO();
 
         glDrawElements(GL_TRIANGLE_FAN, hexagonMesh.getIndexCount(), GL_UNSIGNED_INT, 0);
         
         // glDrawElements(GL_TRIANGLE_FAN, hexagonMesh.getIndexCount(), GL_UNSIGNED_INT, 0); -> for drawing the hexagon in efficient way
         hexagonMesh.unbind_VAO();
-        hexagonTexture.unbind();
+        hexagonTexture1.unbind();
+        hexagonTexture2.unbind();
+
 
         // Swap buffers and poll events
         window.swapBuffers();
