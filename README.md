@@ -7,13 +7,9 @@ This is a repository to store all the code I write while learning Open GL.
 This repo have the following structure:
 
 - `src/` : This folder contains all the code I write.
-  
 - `include/` : This folder contains all the header files. (generic and specific to the project)
-  
 - `updates/` : This folder contains images of the progress I make.
-  
 - `README.md` : This file.
-
 
 ## Branches and their purpose
 
@@ -46,14 +42,17 @@ make
 ```
 
 ## Current progress
-- Created a hexagon with texture and blending of colors
-![Hexagon with texture](updates/1.png)
 
--------------------------------
+- Created a hexagon with texture and blending of colors
+  ![Hexagon with texture](updates/1.png)
+
+- Now the engine supports multiple textures (32!! OF THEM !!)
+  ![Multiple textures](updates/2.png)
+
+---
 
 # DOCS
+
 - [OpenGL](https://learnopengl.com/)
 - [GLFW](https://www.glfw.org/docs/latest/)
 - [GLAD](https://glad.dav1d.de/)
-
-
