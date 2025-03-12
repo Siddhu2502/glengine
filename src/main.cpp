@@ -6,6 +6,10 @@
 #include <vector>
 #include <iostream>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 #include "Window.h"
 #include "Shader.h"
 #include "Utils.h"
@@ -66,7 +70,8 @@ int main()
     // create multiple textures (file path, textrureUnit) -> start unit id from 0 and increment upto 15 ig
     Texture hexagonTexture1((getExecutableDir() + "/images/stoneimage.png").c_str(), 0);
     Texture hexagonTexture2((getExecutableDir() + "/images/smileyface.png").c_str(), 1);
-    
+
+        
     // Render loop
     while (!window.windowShouldClose())
     {
@@ -80,8 +85,16 @@ int main()
         // linking or using the shader program
         shaderprog.initialize();
 
+
         shaderprog.setInt("myTexture1", 0);
         shaderprog.setInt("myTexture2", 1);
+
+        glm::mat4 trans = glm::mat4(1.0f);
+        trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));    
+
+        unsigned int transformLoc = glGetUniformLocation(shaderprog.ID, "transform");
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));    
+
 
         // render the hexagon
         hexagonTexture1.bind();
@@ -100,6 +113,16 @@ int main()
         window.swapBuffers();
         window.pollEvents();
     }
+
+
+
+    glm::vec4 vec(1.0f, 0.0f, 0.0f, 1.0f);
+    // glm::mat4 trans = glm::mat4(1.0f);
+    // trans = glm::translate(trans, glm::vec3(1.0f, 1.0f, 0.0f));
+    // vec = trans * vec;
+    // std::cout << vec.x << vec.y << vec.z << std::endl;
+
+
 
     return 0;
 }
